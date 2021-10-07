@@ -3,11 +3,16 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from one_neuron_perceptron.models import ImageData, ModelData, DataFrame, perceptron
+from neural_nets.settings import PREDICTED_SYMBOLS
 # Create your views here.
+
+# TODO: Handle html-buttons for answers
+# TODO: Add updating to dataframe
+# TODO: Generate dataframe & train
 
 def index(request):
     # print(request.POST['img'])
-    context = {'latest_question_list': []}
+    model_data = ModelData()
 
     # image_data = ImageData()
     # image_data_array = image_data.get_encoded_image_data_from_file()
@@ -20,10 +25,13 @@ def index(request):
     # print(perceptron.train(input_list = dataframe.dataframe.to_numpy()[0][1:], target=0))
     # print(perceptron.query(input_list = dataframe.dataframe.to_numpy()[0][1:]))
     # matplotlib.pyplot.imshow(arr, cmap='Greys', interpolation='None')
-
+    context = {'answer' : 'Это ' + PREDICTED_SYMBOLS[perceptron.query(input_list=model_data.data)] + ' ?'}
     return render(request, 'one_neuron_perceptron/canvas.html', context)
 
 def train(request):
+    return HttpResponse("You're looking at question %s.")
+
+def query(request):
     return HttpResponse("You're looking at question %s.")
 
 def results(request, question_id):
@@ -43,4 +51,4 @@ def get_image(request):
     
 
         
-    return JsonResponse({"img":json.loads(request.body)['img']})
+    return JsonResponse({"answer":perceptron.query(input_list=model_data.data)})

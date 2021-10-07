@@ -11,6 +11,7 @@ from PIL import Image
 
 
 # Create your models here.
+
 class ImageData:
     def save_to_file(self, filename='one_neuron_perceptron/data/test_image.png', image_data_base64="", image_data_array=numpy.array([])):
         if image_data_base64 != "":

@@ -6,113 +6,187 @@
             
     <meta charset="utf-8">
             <title>Canvas в HTML5</title>
-        </head>
+        
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+</head>
     
 
-<body style="background-color:#eee; border: 5px solid #ccc; margin:10px;">
-            <canvas id="myCanvas" width="500" height="500" moz-opaque>
-                    Ваш браузер не поддерживает Canvas
-                </canvas>
-    <button id="saveButton"><a id='link'></a>saveButton</button>
-    <button id="clear">clear</button>
-            <script>
-        var canvas = document.getElementById("myCanvas"),
-            context = canvas.getContext("2d");
-        context.fillStyle = "#FFF";
-        context.lineWidth = 20
-        w = canvas.width,
-            h = canvas.height;
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(canvas, 0, 0);
+<body style="background-color:#eee;">
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+                <div class="row">
+                    <canvas id="myCanvas" width="500" height="500"
+                        style="max-width: 500px; max-height: 500px; min-width: 500px; min-height: 500px;" moz-opaque
+                        class="rounded"> Ваш браузер не поддерживает Canvas </canvas>
+                </div>
+                <div class="btn-group mt-5 mb-5" role="group" aria-label="Basic example">
+                    <button type="button" class="btn btn-outline-primary" id="saveButton"><span
+                            aria-hidden="true">Распознать</span></button>
+                    <button type="button" class="btn btn-outline-primary" id="clear"><span
+                            aria-hidden="true">&#8634;</span></button>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" checked>
+                    <label class="form-check-label" for="flexRadioDefault1">
+                        Не сохранять в набор данных
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2">
+                    <label class="form-check-label" for="flexRadioDefault2">
+                        Сохранить как Первый символ
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" >
+                    <label class="form-check-label" for="flexRadioDefault2">
+                        Сохранить как Второй символ
+                    </label>
+                </div>
+            </div>
 
-        var mouse = {
-            x: 0,
-            y: 0
-        };
-        var draw = false;
+            <div class="col-4">
+                <img width="200" height="200" id="answer_image" class="img-thumbnail rounded float-left">
+                <div class="btn-group mt-5" role="group" aria-label="Basic example">
+                    <button type="button" class="btn btn-outline-success" id="correntAnswer">Верно</button>
+                    <button type="button" class="btn btn-outline-secondary" id="answer" disabled>{{answer}}</button>
+                    <button type="button" class="btn btn-outline-danger" id="uncorrectAnswer">Неверно</button>
+                </div>
+            </div>
+        </div>
+    </div>
+     
+</body>       
+<script>
+    var canvas = document.getElementById("myCanvas"),
+        context = canvas.getContext("2d");
+    context.fillStyle = "#FFF";
+    context.lineWidth = 20
+    w = canvas.width,
+        h = canvas.height;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(canvas, 0, 0);
 
-        canvas.addEventListener("mousedown", function (e) {
+    var mouse = {
+        x: 0,
+        y: 0
+    };
+    var draw = false;
 
-            mouse.x = e.pageX - this.offsetLeft;
-            mouse.y = e.pageY - this.offsetTop;
-            draw = true;
-            context.beginPath();
-            context.moveTo(mouse.x, mouse.y);
-        });
-        canvas.addEventListener("mousemove", function (e) {
+    img = document.getElementById("answer_image");
+    /* 
+                img.onload = function () {
+                    var context = canvas.getContext('2d');
+                    context.drawImage(img, 0, 0);
+                }; */
+    img.src = localStorage.getItem('img');
+    // context.drawImage(img, 0, 0);
+    console.log(img)
 
-            if (draw == true) {
+    canvas.addEventListener("mousedown", function (e) {
 
-                mouse.x = e.pageX - this.offsetLeft;
-                mouse.y = e.pageY - this.offsetTop;
-                context.lineTo(mouse.x, mouse.y);
-                context.stroke();
-            }
-        });
-        canvas.addEventListener("mouseup", function (e) {
+        mouse.x = e.pageX - this.offsetLeft;
+        mouse.y = e.pageY - this.offsetTop;
+        draw = true;
+        context.beginPath();
+        context.moveTo(mouse.x, mouse.y);
+    });
+    canvas.addEventListener("mousemove", function (e) {
+
+        if (draw == true) {
 
             mouse.x = e.pageX - this.offsetLeft;
             mouse.y = e.pageY - this.offsetTop;
             context.lineTo(mouse.x, mouse.y);
             context.stroke();
-            context.closePath();
-            draw = false;
-        });
-        document.getElementById("saveButton").onclick = function () {
-
-            var dataURL = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream")
-            // 
-            var img = new Image();
-            /* 
-                        img.onload = function () {
-                            var context = canvas.getContext('2d');
-                            context.drawImage(img, 0, 0);
-                        }; */
-            img.src = dataURL;
-            console.log(img)
-            // console.log(canvas.data)
-            sentToServer(dataURL)
-            localStorage.setItem('img', dataURL.toString())
-            // downloadImage(dataURL, 'orig.png');
         }
-        // it will save locally
+    });
+    canvas.addEventListener("mouseup", function (e) {
 
-        function downloadImage(data, filename = 'untitled.png') {
-            var a = document.getElementById("link");
-            a.href = data;
-            a.download = filename;
-            // document.body.appendChild(a);
-            console.log(a)
-            a.click();
-        }
+        mouse.x = e.pageX - this.offsetLeft;
+        mouse.y = e.pageY - this.offsetTop;
+        context.lineTo(mouse.x, mouse.y);
+        context.stroke();
+        context.closePath();
+        draw = false;
+    });
+    document.getElementById("saveButton").onclick = function () {
 
-        function sentToServer(data) {
-            const url = 'http://127.0.0.1:8000/image/';
-            console.log('body', JSON.stringify({"img":data}))
-            fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
+        var dataURL = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream")
+        // 
+        var img = new Image();
+        /* 
+                    img.onload = function () {
+                        var context = canvas.getContext('2d');
+                        context.drawImage(img, 0, 0);
+                    }; */
+        img.src = dataURL;
+        console.log(dataURL)
+        // console.log(canvas.data)
+        // document.body.appendChild(img)
+        localStorage.setItem('img', dataURL)
+        sentToServer(dataURL)
+        // downloadImage(dataURL, 'orig.png');
 
-                        // 'Authorization': 'Bearer ' + credentials.t
-                    },
-                    body: JSON.stringify({"img":data})
+    }
+
+    document.getElementById("clear").onclick = function () {
+
+        var context = canvas.getContext('2d');
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(canvas, 0, 0);
+        // downloadImage(dataURL, 'orig.png');
+
+    }
+    // it will save locally
+
+    function downloadImage(data, filename = 'untitled.png') {
+        var a = document.getElementById("link");
+        a.href = data;
+        a.download = filename;
+        // document.body.appendChild(a);
+        console.log(a)
+        a.click();
+    }
+
+    function sentToServer(data) {
+        const url = 'http://' + window.location.hostname + ':8000/image/';
+        console.log('body', JSON.stringify({
+            "img": data
+        }))
+        fetch(url, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+
+                    // 'Authorization': 'Bearer ' + credentials.t
+                },
+                body: JSON.stringify({
+                    "img": data
                 })
-                /* .then(res => res.json())
-                .then(
-                    (result) => {
-                        // setData(result.employees)
-                        console.log(result)
-                    },
-                    // Примечание: важно обрабатывать ошибки именно здесь, а не в блоке catch(),
-                    // чтобы не перехватывать исключения из ошибок в самих компонентах.
-                    (error) => {
-                        console.log(error)
-                    }
-                ) */
-        }
-    </script>
-        </body>
+            })
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    // setData(result.employees)
+                    console.log(result)
+                    // document.getElementById("clear").value = result.answer
+                },
+                // Примечание: важно обрабатывать ошибки именно здесь, а не в блоке catch(),
+                // чтобы не перехватывать исключения из ошибок в самих компонентах.
+                (error) => {
+                    console.log(error)
+                }
+            )
+        window.location.href = window.location.href
+    }
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous">
+</script>
+
 
 </html>
