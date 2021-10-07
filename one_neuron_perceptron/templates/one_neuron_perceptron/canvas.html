@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+    
+
+<head>
+            
+    <meta charset="utf-8">
+            <title>Canvas в HTML5</title>
+        </head>
+    
+
+<body style="background-color:#eee; border: 5px solid #ccc; margin:10px;">
+            <canvas id="myCanvas" width="500" height="500" moz-opaque>
+                    Ваш браузер не поддерживает Canvas
+                </canvas>
+    <button id="saveButton"><a id='link'></a>saveButton</button>
+    <button id="clear">clear</button>
+            <script>
+        var canvas = document.getElementById("myCanvas"),
+            context = canvas.getContext("2d");
+        context.fillStyle = "#FFF";
+        context.lineWidth = 20
+        w = canvas.width,
+            h = canvas.height;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(canvas, 0, 0);
+
+        var mouse = {
+            x: 0,
+            y: 0
+        };
+        var draw = false;
+
+        canvas.addEventListener("mousedown", function (e) {
+
+            mouse.x = e.pageX - this.offsetLeft;
+            mouse.y = e.pageY - this.offsetTop;
+            draw = true;
+            context.beginPath();
+            context.moveTo(mouse.x, mouse.y);
+        });
+        canvas.addEventListener("mousemove", function (e) {
+
+            if (draw == true) {
+
+                mouse.x = e.pageX - this.offsetLeft;
+                mouse.y = e.pageY - this.offsetTop;
+                context.lineTo(mouse.x, mouse.y);
+                context.stroke();
+            }
+        });
+        canvas.addEventListener("mouseup", function (e) {
+
+            mouse.x = e.pageX - this.offsetLeft;
+            mouse.y = e.pageY - this.offsetTop;
+            context.lineTo(mouse.x, mouse.y);
+            context.stroke();
+            context.closePath();
+            draw = false;
+        });
+        document.getElementById("saveButton").onclick = function () {
+
+            var dataURL = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream")
+            // 
+            var img = new Image();
+            /* 
+                        img.onload = function () {
+                            var context = canvas.getContext('2d');
+                            context.drawImage(img, 0, 0);
+                        }; */
+            img.src = dataURL;
+            console.log(img)
+            // console.log(canvas.data)
+            sentToServer(dataURL)
+            localStorage.setItem('img', dataURL.toString())
+            // downloadImage(dataURL, 'orig.png');
+        }
+        // it will save locally
+
+        function downloadImage(data, filename = 'untitled.png') {
+            var a = document.getElementById("link");
+            a.href = data;
+            a.download = filename;
+            // document.body.appendChild(a);
+            console.log(a)
+            a.click();
+        }
+
+        function sentToServer(data) {
+            const url = 'http://127.0.0.1:8000/image/';
+            console.log('body', JSON.stringify({"img":data}))
+            fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+
+                        // 'Authorization': 'Bearer ' + credentials.t
+                    },
+                    body: JSON.stringify({"img":data})
+                })
+                /* .then(res => res.json())
+                .then(
+                    (result) => {
+                        // setData(result.employees)
+                        console.log(result)
+                    },
+                    // Примечание: важно обрабатывать ошибки именно здесь, а не в блоке catch(),
+                    // чтобы не перехватывать исключения из ошибок в самих компонентах.
+                    (error) => {
+                        console.log(error)
+                    }
+                ) */
+        }
+    </script>
+        </body>
+
+</html>
