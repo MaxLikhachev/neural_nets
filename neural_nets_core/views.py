@@ -24,7 +24,7 @@ def index(request):
 
 
 @csrf_exempt
-def train(request):
+def one_neuron_perceptron_train(request):
     model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
     perceptron.train(input_list=model_data.data.ravel(), target=1 if perceptron.query(
         input_list=model_data.data.ravel()) == 0 else 0)
@@ -32,7 +32,21 @@ def train(request):
 
 
 @csrf_exempt
-def query(request):
+def one_neuron_perceptron_query(request):
+    model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
+    return JsonResponse({"answer": perceptron.query(input_list=model_data.data.ravel())})
+
+
+@csrf_exempt
+def hopfield_train(request):
+    model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
+    perceptron.train(input_list=model_data.data.ravel(), target=1 if perceptron.query(
+        input_list=model_data.data.ravel()) == 0 else 0)
+    return JsonResponse({"answer": perceptron.query(input_list=model_data.data.ravel())})
+
+
+@csrf_exempt
+def hopfield_query(request):
     model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
     return JsonResponse({"answer": perceptron.query(input_list=model_data.data.ravel())})
 

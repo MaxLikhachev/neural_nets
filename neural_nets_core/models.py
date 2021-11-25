@@ -101,7 +101,7 @@ class DataFrame():
         if extra_columns_labels != []:
             for index, label in enumerate(extra_columns_labels):
                 self.dataframe[label] = extra_columns[index]
-        print(self.dataframe)
+        # print(self.dataframe)
 
         # self.save_to_file()
         # self.read_from_file()
@@ -110,7 +110,7 @@ class DataFrame():
         self.dataframe.to_csv(filename)
 
     def add_to_file(self, filename='neural_nets_core/data/test.csv'):
-        print(self.read_from_file())
+        # print(self.read_from_file())
         pandas.concat([self.read_from_file(), self.dataframe]).to_csv(filename)
 
     def read_from_file(self, filename='neural_nets_core/data/test.csv'):
@@ -152,12 +152,12 @@ class OneNeuronPerceptron(NeuralNetwork):
         # self.query = lambda input_list: self.activation_function(numpy.sum(numpy.multiply(self.weights, numpy.array(input_list).ravel())))
 
     def train(self, input_list, target=0) -> None:
-        print(input_list.shape)
+        # print(input_list.shape)
         # self.weights += self.learning_rate * self.get_error(target, self.query(input_list.ravel())) * input_list.ravel()
         self.weights = [weight + self.learning_rate * self.get_error(target, self.query(
             input_list)) * input_list[i] for i, weight in enumerate(self.weights)]
-        print(self.get_error(target, self.query(input_list)))
-        print(numpy.mean(self.weights))
+        # print(self.get_error(target, self.query(input_list)))
+        # print(numpy.mean(self.weights))
         self.save_weights_to_file()
 
     def query(self, input_list=[]) -> None:
