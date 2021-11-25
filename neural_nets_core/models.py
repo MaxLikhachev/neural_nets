@@ -4,6 +4,7 @@ from django.db import models
 import base64
 import numpy
 import pandas
+import random
 
 from PIL import Image
 
@@ -12,9 +13,10 @@ from PIL import Image
 
 class ImageData:
     def __init__(self, filename='neural_nets_core/data/test_image.png', image_data_base64="", image_data_array=numpy.array([])) -> None:
-        self.save_to_file(filename = filename, image_data_base64=image_data_base64, image_data_array=image_data_array)
-        self.filename, self.image_data_base64, self.image_data_array = filename, image_data_base64, image_data_array if image_data_array.size != 0 else self.read_from_file(filename=filename)
-
+        self.save_to_file(
+            filename=filename, image_data_base64=image_data_base64, image_data_array=image_data_array)
+        self.filename, self.image_data_base64, self.image_data_array = filename, image_data_base64, image_data_array if image_data_array.size != 0 else self.read_from_file(
+            filename=filename)
 
     def save_to_file(self, filename='neural_nets_core/data/test_image.png', image_data_base64="", image_data_array=numpy.array([])):
         if image_data_base64 != "":
@@ -23,8 +25,7 @@ class ImageData:
                     image_data_base64.split(',')[1].encode('utf-8')))
         elif image_data_array.size != 0:
             #print('save_to_file', image_data_array.shape)
-            Image.fromarray(image_data_array).save(
-                'neural_nets_core/data/converted_image.png')
+            Image.fromarray(image_data_array).save(filename)
 
     def read_from_file(self, filename='neural_nets_core/data/test_image.png', convert='L'):
         return numpy.array(Image.open(filename).convert(convert))
@@ -45,7 +46,7 @@ class ImageData:
         # print('get_encoded_image_data_from_file')
         return numpy.array(self.encode_image_data_array(self.read_from_file(filename=filename, convert=convert)))
 
-    def set_decoded_image_data_to_file(self, filename='neural_nets_core/data/test_image.png', image_data_array=numpy.array([])):
+    def set_decoded_image_data_to_file(self, filename='neural_nets_core/data/generated_image.png', image_data_array=numpy.array([])):
         if image_data_array.size != 0:
             # print('set_decoded_image_data_to_file', image_data_array.shape)
             self.save_to_file(filename=filename, image_data_array=self.decode_image_data_array(
@@ -54,9 +55,11 @@ class ImageData:
 
 class ModelData(ImageData):
     def __init__(self, filename='neural_nets_core/data/test_image.png', convert='L', grid_size=20, image_data_base64="", image_data_array=numpy.array([])) -> None:
-        super().__init__(filename=filename, image_data_base64=image_data_base64, image_data_array=image_data_array)
-        
-        self.data = self.encode_image_data_array(image_data_array = self.image_data_array)
+        super().__init__(filename=filename, image_data_base64=image_data_base64,
+                         image_data_array=image_data_array)
+
+        self.data = self.encode_image_data_array(
+            image_data_array=self.image_data_array)
         if not self.is_empty():
             self.data = self.crop()
             self.data = self.compress(grid_size=grid_size)
@@ -85,8 +88,7 @@ class ModelData(ImageData):
 
 class DataFrame():
     def __init__(self, filename='', filenames=[], extra_columns=[], convert='L', grid_size=20, data=[], columns=[], extra_columns_labels=[]) -> None:
-        
-            
+
         if data == [] and filenames.__len__() != 0:
             for filename in filenames:
                 data.append(numpy.array(ModelData(filename=filename, convert=convert,
@@ -96,7 +98,8 @@ class DataFrame():
                 for j in range(grid_size):
                     columns.append(str(i)+"x" + str(j))
 
-        self.dataframe = pandas.DataFrame(data, columns=columns) if filename == '' else self.read_from_file(filename=filename)
+        self.dataframe = pandas.DataFrame(
+            data, columns=columns) if filename == '' else self.read_from_file(filename=filename)
 
         if extra_columns_labels != []:
             for index, label in enumerate(extra_columns_labels):
@@ -146,7 +149,8 @@ class OneNeuronPerceptron(NeuralNetwork):
         self.init_random_weights = lambda size=1, range = (
             -0.3, 0.3): range[0] + numpy.random.random_sample((size)) * range[1]
         self.size = size
-        self.weights = self.init_random_weights(size=size) if filename == '' else self.read_weights_to_file()
+        self.weights = self.init_random_weights(
+            size=size) if filename == '' else self.read_weights_to_file()
         self.activation_function = lambda output: 0 if output < 0 else 1
         self.get_error = lambda target, output: target - output
         # self.query = lambda input_list: self.activation_function(numpy.sum(numpy.multiply(self.weights, numpy.array(input_list).ravel())))
@@ -174,3 +178,38 @@ class OneNeuronPerceptron(NeuralNetwork):
 
 perceptron = OneNeuronPerceptron()
 
+
+class Hopefield(NeuralNetwork):
+    def __init__(self, size=400, divider=1) -> None:
+        self.init_weights = lambda size: numpy.zeros([size, size], dtype='int')
+        self.input_weights = lambda input_list=[]: numpy.array([[0 if column_element == row_element else int(row_element * column_element) for column_element in input_list] for row_element in input_list], dtype='int')
+        self.energise = lambda weights, input_list=[], bias=0: - \
+            input_list.dot(weights).dot(input_list.T) + sum(bias * input_list)
+        self.weights, self.divider = self.init_weights(size), divider
+
+    def update_async(self, input_list, theta=0.5, times=100):
+        energy_, times_ = [self.energy(self.weights, input_list)], [0]
+        for i in range(times):
+            length = len(input_list)
+            update_num = random.randint(0, length-1)
+            next_time_value = numpy.dot(
+                self.weights[update_num][:], input_list) - theta
+            input_list[update_num] = 1 if next_time_value >= 0 else -1
+            times_.append(i)
+            energy_.append(self.energy(self.weights, input_list))
+        return (input_list, times_, energy_)
+
+    def train(self, input_list=[]):
+        self.divider += 1;
+        weights = self.weights
+        input_weights = self.input_weights(input_list)
+        # print(numpy.divide(numpy.sum(weights, input_weights), self.divider))
+        self.weights = numpy.divide(self.weights + self.input_weights(input_list), self.divider)
+        return self.weights
+        
+
+    def query(self, input_list=[], theta=0.5, times=100) -> None:
+        print(self.update_async(input_list, theta, times))
+
+
+hopefield = Hopefield()
