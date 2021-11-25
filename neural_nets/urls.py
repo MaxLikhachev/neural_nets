@@ -18,5 +18,5 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('one_neuron_perceptron/', include('one_neuron_perceptron.urls')),
+    path('neural_nets_core/', include('neural_nets_core.urls')),
 ]

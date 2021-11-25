@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
-    'one_neuron_perceptron'
+    'neural_nets_core'
 ]
 
 # If this is used then `CORS_ORIGIN_WHITELIST` will not have any effect

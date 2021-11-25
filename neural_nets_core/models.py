@@ -11,12 +11,12 @@ from PIL import Image
 # Create your models here.
 
 class ImageData:
-    def __init__(self, filename='one_neuron_perceptron/data/test_image.png', image_data_base64="", image_data_array=numpy.array([])) -> None:
+    def __init__(self, filename='neural_nets_core/data/test_image.png', image_data_base64="", image_data_array=numpy.array([])) -> None:
         self.save_to_file(filename = filename, image_data_base64=image_data_base64, image_data_array=image_data_array)
         self.filename, self.image_data_base64, self.image_data_array = filename, image_data_base64, image_data_array if image_data_array.size != 0 else self.read_from_file(filename=filename)
 
 
-    def save_to_file(self, filename='one_neuron_perceptron/data/test_image.png', image_data_base64="", image_data_array=numpy.array([])):
+    def save_to_file(self, filename='neural_nets_core/data/test_image.png', image_data_base64="", image_data_array=numpy.array([])):
         if image_data_base64 != "":
             with open(filename, 'wb') as file_to_save:
                 file_to_save.write(base64.decodebytes(
@@ -24,9 +24,9 @@ class ImageData:
         elif image_data_array.size != 0:
             #print('save_to_file', image_data_array.shape)
             Image.fromarray(image_data_array).save(
-                'one_neuron_perceptron/data/converted_image.png')
+                'neural_nets_core/data/converted_image.png')
 
-    def read_from_file(self, filename='one_neuron_perceptron/data/test_image.png', convert='L'):
+    def read_from_file(self, filename='neural_nets_core/data/test_image.png', convert='L'):
         return numpy.array(Image.open(filename).convert(convert))
 
     def encode_image_data_array(self, image_data_array=numpy.array([])):
@@ -40,12 +40,12 @@ class ImageData:
             # print('decode_image_data_array', image_data_array.shape)
             return numpy.array([[((1 - element) * 255).astype(numpy.uint8) for element in row] for row in image_data_array])
 
-    def get_encoded_image_data_from_file(self, filename='one_neuron_perceptron/data/test_image.png', convert='L'):
+    def get_encoded_image_data_from_file(self, filename='neural_nets_core/data/test_image.png', convert='L'):
         # return self.encode_image_data_array(image_data_array = self.read_from_file( filename=filename, convert=convert))
         # print('get_encoded_image_data_from_file')
         return numpy.array(self.encode_image_data_array(self.read_from_file(filename=filename, convert=convert)))
 
-    def set_decoded_image_data_to_file(self, filename='one_neuron_perceptron/data/test_image.png', image_data_array=numpy.array([])):
+    def set_decoded_image_data_to_file(self, filename='neural_nets_core/data/test_image.png', image_data_array=numpy.array([])):
         if image_data_array.size != 0:
             # print('set_decoded_image_data_to_file', image_data_array.shape)
             self.save_to_file(filename=filename, image_data_array=self.decode_image_data_array(
@@ -53,7 +53,7 @@ class ImageData:
 
 
 class ModelData(ImageData):
-    def __init__(self, filename='one_neuron_perceptron/data/test_image.png', convert='L', grid_size=20, image_data_base64="", image_data_array=numpy.array([])) -> None:
+    def __init__(self, filename='neural_nets_core/data/test_image.png', convert='L', grid_size=20, image_data_base64="", image_data_array=numpy.array([])) -> None:
         super().__init__(filename=filename, image_data_base64=image_data_base64, image_data_array=image_data_array)
         
         self.data = self.encode_image_data_array(image_data_array = self.image_data_array)
@@ -106,14 +106,14 @@ class DataFrame():
         # self.save_to_file()
         # self.read_from_file()
 
-    def save_to_file(self, filename='one_neuron_perceptron/data/test.csv'):
+    def save_to_file(self, filename='neural_nets_core/data/test.csv'):
         self.dataframe.to_csv(filename)
 
-    def add_to_file(self, filename='one_neuron_perceptron/data/test.csv'):
+    def add_to_file(self, filename='neural_nets_core/data/test.csv'):
         print(self.read_from_file())
         pandas.concat([self.read_from_file(), self.dataframe]).to_csv(filename)
 
-    def read_from_file(self, filename='one_neuron_perceptron/data/test.csv'):
+    def read_from_file(self, filename='neural_nets_core/data/test.csv'):
         return pandas.read_csv(filename)
 
     def convert(self, grid_size=20):
@@ -140,7 +140,7 @@ class NeuralNetwork:
 
 
 class OneNeuronPerceptron(NeuralNetwork):
-    def __init__(self, learning_rate=0.5, size=400, filename='one_neuron_perceptron/data/weights.csv') -> None:
+    def __init__(self, learning_rate=0.5, size=400, filename='neural_nets_core/data/weights.csv') -> None:
         super().__init__(input_nodes=1, hidden_nodes=0,
                          output_nodes=0, learning_rate=learning_rate)
         self.init_random_weights = lambda size=1, range = (
@@ -163,31 +163,14 @@ class OneNeuronPerceptron(NeuralNetwork):
     def query(self, input_list=[]) -> None:
         return self.activation_function(numpy.sum(numpy.multiply(self.weights, input_list.ravel()[:self.size])))
 
-    def save_weights_to_file(self, filename='one_neuron_perceptron/data/weights.csv'):
+    def save_weights_to_file(self, filename='neural_nets_core/data/weights.csv'):
         dataframe = DataFrame(data=[self.weights])
         dataframe.save_to_file(filename)
 
-    def read_weights_to_file(self, filename='one_neuron_perceptron/data/weights.csv'):
+    def read_weights_to_file(self, filename='neural_nets_core/data/weights.csv'):
         dataframe = DataFrame(filename=filename)
         return dataframe.dataframe.to_numpy()[0][1:]
 
 
 perceptron = OneNeuronPerceptron()
 
-
-def get_prediction(data):
-    print('get_prediction')
-    image_data = ImageData()
-    image_data.save_to_file(image_data_base64=data)
-    model_data = ModelData()
-    return perceptron.query(input_list=model_data.data)
-
-
-def get_train(data, epochs=10, target=0):
-    print('train', epochs, target)
-    image_data = ImageData()
-    image_data.save_to_file(image_data_base64=data)
-    model_data = ModelData()
-    for epoch in range(epochs):
-        perceptron.train(input_list=model_data.data, target=target)
-    return perceptron.query(input_list=model_data.data)
