@@ -5,6 +5,7 @@ import base64
 import numpy
 import pandas
 import random
+import math
 
 from PIL import Image
 
@@ -143,7 +144,7 @@ class NeuralNetwork:
 
 
 class OneNeuronPerceptron(NeuralNetwork):
-    def __init__(self, learning_rate=0.5, size=400, filename='neural_nets_core/data/weights.csv') -> None:
+    def __init__(self, learning_rate=0.5, size=20*20, filename='neural_nets_core/data/weights.csv') -> None:
         super().__init__(input_nodes=1, hidden_nodes=0,
                          output_nodes=0, learning_rate=learning_rate)
         self.init_random_weights = lambda size=1, range = (
@@ -180,12 +181,12 @@ perceptron = OneNeuronPerceptron()
 
 
 class Hopefield(NeuralNetwork):
-    def __init__(self, size=400, divider=1) -> None:
-        self.init_weights = lambda size: numpy.zeros([size, size], dtype='int')
-        self.input_weights = lambda input_list=[]: numpy.array([[0 if column_element == row_element else int(row_element * column_element) for column_element in input_list] for row_element in input_list], dtype='int')
+    def __init__(self, size=20) -> None:
+        self.init_weights = lambda size: numpy.zeros([size, size]).astype(int)
+        self.activation_function = lambda input_list=[]: numpy.array([[ 0 if i == j else input_list[i][j] * input_list[j][i] for j in range(input_list.shape[1])] for i in range(input_list.shape[0])], dtype='int')
         self.energise = lambda weights, input_list=[], bias=0: - \
             input_list.dot(weights).dot(input_list.T) + sum(bias * input_list)
-        self.weights, self.divider = self.init_weights(size), divider
+        self.weights = self.init_weights(size)
 
     def update_async(self, input_list, theta=0.5, times=100):
         energy_, times_ = [self.energy(self.weights, input_list)], [0]
@@ -200,11 +201,7 @@ class Hopefield(NeuralNetwork):
         return (input_list, times_, energy_)
 
     def train(self, input_list=[]):
-        self.divider += 1;
-        weights = self.weights
-        input_weights = self.input_weights(input_list)
-        # print(numpy.divide(numpy.sum(weights, input_weights), self.divider))
-        self.weights = numpy.divide(self.weights + self.input_weights(input_list), self.divider)
+        self.weights += self.activation_function(input_list)
         return self.weights
         
 
