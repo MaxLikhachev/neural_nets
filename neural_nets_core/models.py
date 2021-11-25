@@ -152,9 +152,9 @@ class OneNeuronPerceptron(NeuralNetwork):
         self.size = size
         self.weights = self.init_random_weights(
             size=size) if filename == '' else self.read_weights_to_file()
-        self.activation_function = lambda output: 0 if output < 0 else 1
+        self.energy = lambda output: 0 if output < 0 else 1
         self.get_error = lambda target, output: target - output
-        # self.query = lambda input_list: self.activation_function(numpy.sum(numpy.multiply(self.weights, numpy.array(input_list).ravel())))
+        # self.query = lambda input_list: self.energy(numpy.sum(numpy.multiply(self.weights, numpy.array(input_list).ravel())))
 
     def train(self, input_list, target=0) -> None:
         # print(input_list.shape)
@@ -166,7 +166,7 @@ class OneNeuronPerceptron(NeuralNetwork):
         self.save_weights_to_file()
 
     def query(self, input_list=[]) -> None:
-        return self.activation_function(numpy.sum(numpy.multiply(self.weights, input_list.ravel()[:self.size])))
+        return self.energy(numpy.sum(numpy.multiply(self.weights, input_list.ravel()[:self.size])))
 
     def save_weights_to_file(self, filename='neural_nets_core/data/weights.csv'):
         dataframe = DataFrame(data=[self.weights])
@@ -182,31 +182,31 @@ perceptron = OneNeuronPerceptron()
 
 class Hopefield(NeuralNetwork):
     def __init__(self, size=20) -> None:
-        self.init_weights = lambda size: numpy.zeros([size, size]).astype(int)
-        self.activation_function = lambda input_list=[]: numpy.array([[ 0 if i == j else input_list[i][j] * input_list[j][i] for j in range(input_list.shape[1])] for i in range(input_list.shape[0])], dtype='int')
-        self.energise = lambda weights, input_list=[], bias=0: - \
-            input_list.dot(weights).dot(input_list.T) + sum(bias * input_list)
-        self.weights = self.init_weights(size)
+        self.create = lambda input_list=[]: numpy.array([[ 0 if i == j else input_list[i][j] * input_list[j][i] for j in range(input_list.shape[1])] for i in range(input_list.shape[0])], dtype='int')
+        self.energy = lambda input_list=[], bias=0: - \
+            input_list.dot(self.weights).dot(input_list.T) + sum(bias * input_list)
+        self.weights = numpy.zeros([size, size]).astype(int)
+        self.noise = lambda input_list, index_row, index_column, theta: 1 if numpy.mean(numpy.dot(self.weights[index_row][index_column], input_list)) - theta >= 0 else -1
+        self.activate = lambda input_list: numpy.array([[0 if column >= 0 else 1 for column in row] for row in input_list])
 
-    def update_async(self, input_list, theta=0.5, times=100):
-        energy_, times_ = [self.energy(self.weights, input_list)], [0]
-        for i in range(times):
-            length = len(input_list)
-            update_num = random.randint(0, length-1)
-            next_time_value = numpy.dot(
-                self.weights[update_num][:], input_list) - theta
-            input_list[update_num] = 1 if next_time_value >= 0 else -1
-            times_.append(i)
-            energy_.append(self.energy(self.weights, input_list))
-        return (input_list, times_, energy_)
+    def update(self, input_list, theta=0.5, iterations=10):
+        energy, times = [self.energy(input_list)], [0]
+        for iteration in range(iterations):
+
+            index_row, index_column = random.randint(0, len(input_list) - 1), random.randint(0, len(input_list) - 1)
+            input_list[index_row][index_column] = self.noise(input_list=input_list, index_row=index_row, index_column=index_column, theta=theta)
+            times.append(iteration)
+            energy.append(self.energy(input_list))
+        return (input_list, times, energy)
 
     def train(self, input_list=[]):
-        self.weights += self.activation_function(input_list)
-        return self.weights
-        
+        self.weights = self.create(input_list) if (numpy.sum(self.weights) == 0) else self.weights 
+        updated_input_list, times, energy = self.update(input_list)
+        self.weights = updated_input_list
+        return self.activate(energy[-1])
 
-    def query(self, input_list=[], theta=0.5, times=100) -> None:
-        print(self.update_async(input_list, theta, times))
+    def query(self, input_list=[]):
+        return self.activate(self.energy(input_list))
 
 
 hopefield = Hopefield()
