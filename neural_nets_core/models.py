@@ -182,36 +182,25 @@ perceptron = OneNeuronPerceptron()
 
 class Hopefield(NeuralNetwork):
     def __init__(self, size=20, divider=1) -> None:
+        self.weights, self.divider = numpy.zeros([size, size]).astype(int), divider
+        self.activate = lambda value: 1 if value >= 0 else 1
         self.create = lambda input_list=[]: numpy.array(
             [[0 if i == j else input_list[i][j] * input_list[j][i] for j in range(input_list.shape[1])] for i in range(input_list.shape[0])], dtype='int')
-        self.energy = lambda input_list=[], bias=0: - \
-            input_list.dot(self.weights).dot(
-                input_list.T) + sum(bias * input_list)
-        self.weights = numpy.zeros([size, size]).astype(int)
-        self.activate = lambda input_list, index_row, index_column, theta: 1 if numpy.mean(
-            numpy.dot(self.weights[index_row][index_column], input_list)) - theta >= 0 else -1
-        self.activate = lambda value: 1 if value >= 0 else 1
-        self.divider = divider
 
-    def update(self, input_list, theta=0.5, epochs=10):
-        energy, epochs_list = [self.energy(input_list)], [0]
+    def update(self, input_list, theta=0.5, epochs=100):
         for epoch in range(epochs):
             index_row = random.randint(0, len(input_list) - 1)
             index_column = random.randint(0, len(input_list) - 1)
             input_list[index_row][index_column] = self.activate(value=input_list[index_row][index_column])
-            epochs_list.append(epoch)
-            energy.append(self.energy(input_list))
-        return (input_list, epochs_list, energy)
+        return input_list
 
-    def train(self, input_list, theta=0.5, epochs=10):
+    def train(self, input_list, theta=0.5, epochs=100):
         self.divider += 1
         self.weights = (self.weights + self.create(input_list)) / self.divider
-        weights, epochs, energy = self.update(input_list, theta, epochs)
-        print(weights)
-        return weights
+        return self.query(input_list, theta=0.5, epochs=100)
 
-    def query(self, input_list=[]):
-        return self.activate(self.energy(input_list))
+    def query(self, input_list, theta=0.5, epochs=100):
+        return self.update(input_list, theta, epochs)
 
 
 hopefield = Hopefield()
