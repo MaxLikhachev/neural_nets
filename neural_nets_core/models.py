@@ -185,22 +185,30 @@ class Hopefield(NeuralNetwork):
         self.weights, self.divider = numpy.zeros([size, size]).astype(int), divider
         self.activate = lambda value: 1 if value >= 0 else 1
         self.create = lambda input_list=[]: numpy.array(
-            [[0 if i == j else input_list[i][j] * input_list[j][i] for j in range(input_list.shape[1])] for i in range(input_list.shape[0])], dtype='int')
+            [[0 if i == j else input_list[i][j] * input_list[j][i] for j in range(input_list.shape[1])] for i in range(input_list.shape[0])], dtype='int') # Hebbian rule
+        self.energy = lambda input_list=[], bias=0: - \
+            input_list.dot(self.weights).dot(
+                input_list.T) + sum(bias * input_list)
 
-    def update(self, input_list, theta=0.5, epochs=100):
+    def update(self, input_list, threshold=0.5, epochs=100):
+        energies, epochs_list = [self.energy(input_list)], [0]
         for epoch in range(epochs):
             index_row = random.randint(0, len(input_list) - 1)
             index_column = random.randint(0, len(input_list) - 1)
             input_list[index_row][index_column] = self.activate(value=input_list[index_row][index_column])
+            epochs_list.append(epoch)
+            energies.append(self.energy(input_list))
+        print("epochs", epochs_list)
+        print("energies", energies)
         return input_list
 
-    def train(self, input_list, theta=0.5, epochs=100):
+    def train(self, input_list, threshold=0.5, epochs=100):
         self.divider += 1
         self.weights = (self.weights + self.create(input_list)) / self.divider
-        return self.query(input_list, theta=0.5, epochs=100)
+        return self.query(input_list, threshold=0.5, epochs=100)
 
-    def query(self, input_list, theta=0.5, epochs=100):
-        return self.update(input_list, theta, epochs)
+    def query(self, input_list, threshold=0.5, epochs=100):
+        return self.update(input_list, threshold, epochs)
 
 
 hopefield = Hopefield()
