@@ -152,9 +152,9 @@ class OneNeuronPerceptron(NeuralNetwork):
         self.size = size
         self.weights = self.init_random_weights(
             size=size) if filename == '' else self.read_weights_to_file()
-        self.energy = lambda output: 0 if output < 0 else 1
+        self.activate = lambda output: 0 if output < 0 else 1
         self.get_error = lambda target, output: target - output
-        # self.query = lambda input_list: self.energy(numpy.sum(numpy.multiply(self.weights, numpy.array(input_list).ravel())))
+        # self.query = lambda input_list: self.activate(numpy.sum(numpy.multiply(self.weights, numpy.array(input_list).ravel())))
 
     def train(self, input_list, target=0) -> None:
         # print(input_list.shape)
@@ -166,7 +166,7 @@ class OneNeuronPerceptron(NeuralNetwork):
         self.save_weights_to_file()
 
     def query(self, input_list=[]) -> None:
-        return self.energy(numpy.sum(numpy.multiply(self.weights, input_list.ravel()[:self.size])))
+        return self.activate(numpy.sum(numpy.multiply(self.weights, input_list.ravel()[:self.size])))
 
     def save_weights_to_file(self, filename='neural_nets_core/data/weights.csv'):
         dataframe = DataFrame(data=[self.weights])
@@ -181,29 +181,34 @@ perceptron = OneNeuronPerceptron()
 
 
 class Hopefield(NeuralNetwork):
-    def __init__(self, size=20) -> None:
-        self.create = lambda input_list=[]: numpy.array([[ 0 if i == j else input_list[i][j] * input_list[j][i] for j in range(input_list.shape[1])] for i in range(input_list.shape[0])], dtype='int')
+    def __init__(self, size=20, divider=1) -> None:
+        self.create = lambda input_list=[]: numpy.array(
+            [[0 if i == j else input_list[i][j] * input_list[j][i] for j in range(input_list.shape[1])] for i in range(input_list.shape[0])], dtype='int')
         self.energy = lambda input_list=[], bias=0: - \
-            input_list.dot(self.weights).dot(input_list.T) + sum(bias * input_list)
+            input_list.dot(self.weights).dot(
+                input_list.T) + sum(bias * input_list)
         self.weights = numpy.zeros([size, size]).astype(int)
-        self.noise = lambda input_list, index_row, index_column, theta: 1 if numpy.mean(numpy.dot(self.weights[index_row][index_column], input_list)) - theta >= 0 else -1
-        self.activate = lambda input_list: numpy.array([[0 if column >= 0 else 1 for column in row] for row in input_list])
+        self.activate = lambda input_list, index_row, index_column, theta: 1 if numpy.mean(
+            numpy.dot(self.weights[index_row][index_column], input_list)) - theta >= 0 else -1
+        self.activate = lambda value: 1 if value >= 0 else 1
+        self.divider = divider
 
-    def update(self, input_list, theta=0.5, iterations=10):
-        energy, times = [self.energy(input_list)], [0]
-        for iteration in range(iterations):
-
-            index_row, index_column = random.randint(0, len(input_list) - 1), random.randint(0, len(input_list) - 1)
-            input_list[index_row][index_column] = self.noise(input_list=input_list, index_row=index_row, index_column=index_column, theta=theta)
-            times.append(iteration)
+    def update(self, input_list, theta=0.5, epochs=10):
+        energy, epochs_list = [self.energy(input_list)], [0]
+        for epoch in range(epochs):
+            index_row = random.randint(0, len(input_list) - 1)
+            index_column = random.randint(0, len(input_list) - 1)
+            input_list[index_row][index_column] = self.activate(value=input_list[index_row][index_column])
+            epochs_list.append(epoch)
             energy.append(self.energy(input_list))
-        return (input_list, times, energy)
+        return (input_list, epochs_list, energy)
 
-    def train(self, input_list=[]):
-        self.weights = self.create(input_list) if (numpy.sum(self.weights) == 0) else self.weights 
-        updated_input_list, times, energy = self.update(input_list)
-        self.weights = updated_input_list
-        return self.activate(energy[-1])
+    def train(self, input_list, theta=0.5, epochs=10):
+        self.divider += 1
+        self.weights = (self.weights + self.create(input_list)) / self.divider
+        weights, epochs, energy = self.update(input_list, theta, epochs)
+        print(weights)
+        return weights
 
     def query(self, input_list=[]):
         return self.activate(self.energy(input_list))
