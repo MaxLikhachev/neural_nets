@@ -4,7 +4,7 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import pandas
 import numpy
-from neural_nets_core.models import ImageData, ModelData, DataFrame, OneNeuronPerceptron, perceptron, hopefield
+from neural_nets_core.models import Hopefield, ImageData, ModelData, DataFrame, OneNeuronPerceptron, perceptron, hopefield
 from neural_nets.settings import PREDICTED_SYMBOLS
 # Create your views here.
 
@@ -62,6 +62,10 @@ def hopfield_detrain(request):
 
 
 @csrf_exempt
+def hopfield_restart(request):
+    hopefield = Hopefield()
+    return HttpResponse()
+
 def hopfield_query(request):
     model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
     image_data_array=model_data.bipolar(hopefield.query(input_list=model_data.bipolar(model_data.data, -1, 1).ravel()), 0, 1).reshape(model_data.data.shape)
