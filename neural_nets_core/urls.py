@@ -9,7 +9,7 @@ urlpatterns = [
     path('one_neuron_perceptron_query/', views.one_neuron_perceptron_query, name='query'),
     # hopfield
     path('hopfield_train/', views.hopfield_train, name='train'),
-    path('hopfield_detrain/', views.hopfield_query, name='detrain'),
+    path('hopfield_detrain/', views.hopfield_detrain, name='detrain'),
     path('hopfield_query/', views.hopfield_query, name='query'),
 
 ]

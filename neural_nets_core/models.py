@@ -73,8 +73,8 @@ class ModelData(ImageData):
             self.data = self.compress(grid_size=grid_size)
             self.data = self.data[:grid_size, :grid_size]
             self.set_decoded_image_data_to_file(image_data_array=self.data)
-        print('ModelData data')
-        print(self.data)
+        # print('ModelData data')
+        # print(self.data)
 
     def crop(self):
         # print('clean', numpy.sum(self.data==0),  numpy.sum(self.data==1))
@@ -183,7 +183,7 @@ perceptron = OneNeuronPerceptron()
 
 class Hopefield(NeuralNetwork):
     def __init__(self, size=400) -> None:
-        self.weights = numpy.zeros([size, size]).astype(int)
+        self.weights = numpy.zeros([size, size]).astype(float)
         self.size, self.divider = size, 0
 
         self.activate = lambda output: -1 if output <= 0 else 1
@@ -191,21 +191,23 @@ class Hopefield(NeuralNetwork):
         self.create = lambda input_list=[]: [[0 if i == j else element for j,
                                               element in enumerate(row)] for i, row in enumerate(numpy.outer(input_list, input_list))]
 
-        self.tripolar = lambda data=[]: numpy.array([self.activate(
-            element) if element != 0 else 0 for element in numpy.array(data).ravel()]).reshape(numpy.array(data).shape)
-
     def divide(self, value):
         self.divider += 1
         return value / self.divider
 
-    def query(self, input_list, epochs=10):
-        return self.divide(numpy.dot(self.weights, input_list))
+    def query(self, input_list, epochs=100):
+        """ for epoch in range(epochs):
+            model_data = ModelData()
+            print(model_data.bipolar(self.divide(
+                numpy.dot(self.weights, input_list)), 0, 1).reshape(20, 20))
+        print(self.weights) """
+        return [self.divide(numpy.dot(self.weights, input_list)) for epoch in range(epochs)][-1]
 
     def train(self, input_list):
         self.weights = self.divide(self.weights + self.create(input_list))
 
     def detrain(self, input_list, threshold=0.5):
-        self.weights -= self.create(input_list) * threshold
+        self.weights -= numpy.dot(threshold, self.create(input_list))
 
 
 hopefield = Hopefield()
