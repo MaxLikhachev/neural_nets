@@ -40,10 +40,13 @@ def one_neuron_perceptron_query(request):
 @csrf_exempt
 def hopfield_train(request):
     model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
-    hopefield.train(input_list=model_data.bipolar(model_data.data, -1, 1).ravel())
-    image_data_array=model_data.bipolar(hopefield.query(input_list=model_data.bipolar(model_data.data, -1, 1).ravel()), 0, 1).reshape(model_data.data.shape)
-    # print('hopfield_train',image_data_array) 
-    model_data.set_decoded_image_data_to_file(image_data_array=image_data_array)
+    hopefield.train(input_list=model_data.bipolar(
+        model_data.data, -1.0, 1.0).ravel())
+    image_data_array = model_data.bipolar(hopefield.query(input_list=model_data.bipolar(
+        model_data.data, -1.0, 1.0).ravel()), 0.0, 1.0).reshape(model_data.data.shape)
+    # print('hopfield_train',image_data_array)
+    model_data.set_decoded_image_data_to_file(
+        image_data_array=image_data_array)
     with open('neural_nets_core/data/generated_image.png', 'rb') as f:
         contents = f.read()
     return HttpResponse(contents)
@@ -52,26 +55,26 @@ def hopfield_train(request):
 @csrf_exempt
 def hopfield_detrain(request):
     model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
-    hopefield.detrain(input_list=model_data.bipolar(model_data.data, -1, 1).ravel())
-    image_data_array=model_data.bipolar(hopefield.query(input_list=model_data.bipolar(model_data.data, -1, 1).ravel()), 0, 1).reshape(model_data.data.shape)
-    # print('hopfield_detrain',image_data_array) 
-    model_data.set_decoded_image_data_to_file(image_data_array=image_data_array)
-    with open('neural_nets_core/data/generated_image.png', 'rb') as f:
-        contents = f.read()
-    return HttpResponse(contents)
+    hopefield.detrain(input_list=model_data.bipolar(
+        model_data.data, -1.0, 1.0).ravel())
+    return HttpResponse()
 
 
-@csrf_exempt
 def hopfield_restart(request):
     hopefield = Hopefield()
     return HttpResponse()
 
+
+@csrf_exempt
 def hopfield_query(request):
     model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
-    image_data_array=model_data.bipolar(hopefield.query(input_list=model_data.bipolar(model_data.data, -1, 1).ravel()), 0, 1).reshape(model_data.data.shape)
+    print('hopfield_query', model_data.data)
+    image_data_array = model_data.bipolar(hopefield.query(input_list=model_data.bipolar(
+        model_data.data, -1.0, 1.0).ravel()), 0.0, 1.0).reshape(model_data.data.shape)
     print('hopfield_query', image_data_array)
-    model_data.set_decoded_image_data_to_file(image_data_array=image_data_array)
-    
+    model_data.set_decoded_image_data_to_file(
+        image_data_array=image_data_array)
+
     with open('neural_nets_core/data/generated_image.png', 'rb') as f:
         contents = f.read()
     return HttpResponse(contents)

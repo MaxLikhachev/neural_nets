@@ -69,7 +69,7 @@ class ModelData(ImageData):
             [min_value if element <= 0 else max_value for element in numpy.array(data).ravel()]).reshape(numpy.array(data).shape)
 
         if not self.is_empty():
-            self.data = self.crop()
+            # self.data = self.crop()
             self.data = self.compress(grid_size=grid_size)
             self.data = self.data[:grid_size, :grid_size]
             self.set_decoded_image_data_to_file(image_data_array=self.data)
@@ -183,25 +183,20 @@ perceptron = OneNeuronPerceptron()
 
 class Hopefield(NeuralNetwork):
     def __init__(self, size=400) -> None:
-        self.weights = numpy.zeros([size, size]).astype(float)
+        self.weights = numpy.zeros([size, size])
         self.size, self.divider = size, 0
 
-        self.activate = lambda output: -1 if output <= 0 else 1
-
-        self.create = lambda input_list=[]: [[0 if i == j else element for j,
-                                              element in enumerate(row)] for i, row in enumerate(numpy.outer(input_list, input_list))]
+        self.activate = lambda output: -1.0 if output <= 0 else 1.0
 
     def divide(self, value):
         self.divider += 1
         return value / self.divider
 
+    def create(self, input_list):
+        return [[0.0 if i == j else element for j, element in enumerate(row)] for i, row in enumerate(numpy.outer(input_list, input_list))]
+
     def query(self, input_list, epochs=100):
-        """ for epoch in range(epochs):
-            model_data = ModelData()
-            print(model_data.bipolar(self.divide(
-                numpy.dot(self.weights, input_list)), 0, 1).reshape(20, 20))
-        print(self.weights) """
-        return [self.divide(numpy.dot(self.weights, input_list)) for epoch in range(epochs)][-1]
+        return [self.activate(numpy.sum(row)) for row in self.weights.dot([[element] for element in input_list])]
 
     def train(self, input_list):
         self.weights = self.divide(self.weights + self.create(input_list))
