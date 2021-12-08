@@ -40,8 +40,19 @@ def one_neuron_perceptron_query(request):
 @csrf_exempt
 def hopfield_train(request):
     model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
-    image_data_array=hopefield.train(input_list=model_data.data)
-    model_data.set_decoded_image_data_to_file(image_data_array=image_data_array)
+    image_data_array=hopefield.train(input_list=model_data.data.ravel())
+    # model_data.set_decoded_image_data_to_file(image_data_array=image_data_array)
+    print('hopfield_train',image_data_array) 
+    with open('neural_nets_core/data/generated_image.png', 'rb') as f:
+        contents = f.read()
+    return HttpResponse(contents)
+
+
+@csrf_exempt
+def hopfield_detrain(request):
+    model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
+    image_data_array=hopefield.detrain(input_list=model_data.data.ravel())
+    # model_data.set_decoded_image_data_to_file(image_data_array=image_data_array)
     print('hopfield_train',image_data_array) 
     with open('neural_nets_core/data/generated_image.png', 'rb') as f:
         contents = f.read()
@@ -51,8 +62,7 @@ def hopfield_train(request):
 @csrf_exempt
 def hopfield_query(request):
     model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
-    hopefield.train(input_list=model_data.data)
-    image_data_array=hopefield.query(input_list=model_data.data)
+    image_data_array=hopefield.query(input_list=model_data.data.ravel())
     model_data.set_decoded_image_data_to_file(image_data_array=image_data_array)
     print('hopfield_query', image_data_array)
     with open('neural_nets_core/data/generated_image.png', 'rb') as f:

@@ -181,34 +181,38 @@ perceptron = OneNeuronPerceptron()
 
 
 class Hopefield(NeuralNetwork):
-    def __init__(self, size=20, divider=1) -> None:
-        self.weights, self.divider = numpy.zeros([size, size]).astype(int), divider
-        self.activate = lambda value: 1 if value >= 0 else 1
-        self.create = lambda input_list=[]: numpy.array(
-            [[0 if i == j else input_list[i][j] * input_list[j][i] for j in range(input_list.shape[1])] for i in range(input_list.shape[0])], dtype='int') # Hebbian rule
-        self.energy = lambda input_list=[], bias=0: - \
-            input_list.dot(self.weights).dot(
-                input_list.T) + sum(bias * input_list)
+    def __init__(self, size=400) -> None:
+        self.weights, self.size = numpy.zeros([size, size]).astype(int), size
 
-    def update(self, input_list, threshold=0.5, epochs=100):
-        energies, epochs_list = [self.energy(input_list)], [0]
-        for epoch in range(epochs):
-            index_row = random.randint(0, len(input_list) - 1)
-            index_column = random.randint(0, len(input_list) - 1)
-            input_list[index_row][index_column] = self.activate(value=input_list[index_row][index_column])
-            epochs_list.append(epoch)
-            energies.append(self.energy(input_list))
-        print("epochs", epochs_list)
-        print("energies", energies)
-        return input_list
+        self.activate = lambda output: -1 if output <= 0 else 1
 
-    def train(self, input_list, threshold=0.5, epochs=100):
-        self.divider += 1
-        self.weights = (self.weights + self.create(input_list)) / self.divider
-        return self.query(input_list, threshold=0.5, epochs=100)
+        self.bipolar = lambda data=[]: numpy.array([self.activate(
+            element) for element in numpy.array(data).ravel()]).reshape(numpy.array(data).shape)
 
-    def query(self, input_list, threshold=0.5, epochs=100):
-        return self.update(input_list, threshold, epochs)
+        self.create = lambda input_list=[]: [[0 if i == j else element for j,
+                                              element in enumerate(row)] for i, row in enumerate(numpy.outer(input_list, input_list))]
+
+        self.tripolar = lambda data=[]: numpy.array([self.activate(
+            element) if element != 0 else 0 for element in numpy.array(data).ravel()]).reshape(numpy.array(data).shape)
+
+    def retrieve_pattern(self, data):
+        return [1 if numpy.all(numpy.dot(self.weights[i], data[i]) > 0) else -1 for i in range(len(data))]
+
+    def query(self, input_list, epochs=10):
+        print('query input', numpy.array(self.weights),
+              numpy.array(self.bipolar(input_list)))
+        print('query result', self.tripolar(
+            numpy.dot(self.weights, self.bipolar(input_list))).reshape(int(math.sqrt(self.size)), int(math.sqrt(self.size))))
+        return self.tripolar(numpy.dot(self.weights, self.bipolar(input_list)))
+
+    def train(self, input_list):
+        self.weights = self.tripolar(
+            self.weights + self.create(self.bipolar(input_list)))
+        self.tripolar(self.bipolar(input_list))
+        print('train', numpy.array(self.weights))
+
+    def detrain(self, input_list, threshold=0.5):
+        self.weights -= self.create(self.bipolar(input_list)) * threshold
 
 
 hopefield = Hopefield()
