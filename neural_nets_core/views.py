@@ -68,10 +68,10 @@ def hopfield_restart(request):
 @csrf_exempt
 def hopfield_query(request):
     model_data = ModelData(image_data_base64=json.loads(request.body)['img'])
-    print('hopfield_query', model_data.data)
+    # print('hopfield_query', model_data.data)
     image_data_array = model_data.bipolar(hopefield.query(input_list=model_data.bipolar(
         model_data.data, -1.0, 1.0).ravel()), 0.0, 1.0).reshape(model_data.data.shape)
-    print('hopfield_query', image_data_array)
+    # print('hopfield_query', image_data_array)
     model_data.set_decoded_image_data_to_file(
         image_data_array=image_data_array)
 

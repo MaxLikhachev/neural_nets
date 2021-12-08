@@ -193,10 +193,16 @@ class Hopefield(NeuralNetwork):
         return value / self.divider
 
     def create(self, input_list):
-        return [[0.0 if i == j else element for j, element in enumerate(row)] for i, row in enumerate(numpy.outer(input_list, input_list))]
+        return numpy.array([[0.0 if i == j else element for j, element in enumerate(row)] for i, row in enumerate(numpy.outer(input_list, input_list))])
 
-    def query(self, input_list, epochs=100):
-        return [self.activate(numpy.sum(row)) for row in self.weights.dot([[element] for element in input_list])]
+    def query(self, input_list, epochs=100, output=[]):
+        for epoch in range(epochs):
+            temp = numpy.array([self.activate(numpy.sum(row)) for row in self.weights.dot(
+                [[element] for element in input_list])])
+            if numpy.array_equal(output, temp):
+                break
+            output = temp
+        return output
 
     def train(self, input_list):
         self.weights = self.divide(self.weights + self.create(input_list))
